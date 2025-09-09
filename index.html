@@ -868,31 +868,10 @@
             return 2 * R * Math.asin(Math.sqrt(h));
         }
         
-        function onGeo(pos) {
-            const c = pos.coords;
-            let v = c.speed != null ? kmh(c.speed) : null;
-            if (v == null && prev) {
-                const dt = (pos.timestamp - prev.t) / 1000;
-                const d = hav(prev, { lat: c.latitude, lon: c.longitude });
-                v = (d / dt * 3.6).toFixed(0);
-            }
-            if (!Number.isFinite(Number(v))) v = '--';
-            speedVal.textContent = v;
-            speedFabVal.textContent = `${v} km/h`;
-            prev = { lat: c.latitude, lon: c.longitude, t: pos.timestamp };
-            updateETA();
-        }
+       
         
-        function onGeoError(err) { $('geoHint').textContent = `${STR[LANG].hint} (${err.message})`; }
-        function startGeo() {
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(onGeo, onGeoError, {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 5000
-                });
-            }
-        }
+        
+        
         
         function startDemoIfIdle() { 
             setTimeout(() => { 
@@ -902,7 +881,7 @@
                     t += 1.5; 
                     lat += 0.0008; 
                     lon += 0.0005 * Math.sin(t / 5); 
-                    onGeo({ coords: { latitude: lat, longitude: lon, accuracy: 15, heading: 90, speed: null }, timestamp: Date.now() }); 
+                     
                     speedVal.textContent = '40'; 
                     speedFabVal.textContent = '40 km/h'; 
                 }, 1500); 
@@ -933,10 +912,9 @@
         
         applyLang();
         initSelects();
-        startGeo();
-        startDemoIfIdle();
         
-        const ws = new WebSocket('wss://953638f3a86d.ngrok-free.app');
+        
+        const ws = new WebSocket('wss://53da4f779825.ngrok-free.app/client');
 
         ws.addEventListener("open", () => {
             console.log("Connected to Python WebSocket server");
