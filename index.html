@@ -596,7 +596,22 @@
             cursor: pointer;
             font-weight: 600;
         }
+
+        /*Map releated*/
+        #map {
+            height: 400px;
+            width: 100%;
+        }
     </style>
+
+
+    <!--Map releated-->
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Laptop Location Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 
 <body>
@@ -913,7 +928,7 @@
         applyLang();
         initSelects();
         
-        
+        // Javascript releated to values being displayed 
         const ws = new WebSocket('wss://1dcf76d04ee1.ngrok-free.app/client');
 
         ws.addEventListener("open", () => {
@@ -935,13 +950,17 @@
                 }
 
                 if (data.distance !== undefined && Array.isArray(data.distance)) {
-                    document.getElementById('distanceVal').textContent = data.distance.join(", ");
+                    document.getElementById('distanceVal').textContent = data.distance[data.distance.length-1];
                 }
-                if (data.time !== undefined) {
+                if (data.time !== undefined && Array.isArray(data.time)) {
+                    document.getElementById('timeVal').textContent = data.time[data.time.length - 1];
+                } else if (data.time !== undefined) {
                     document.getElementById('timeVal').textContent = data.time;
                 }
+
+                }
                 if (data.percent_covered !== undefined && Array.isArray(data.percent_covered)) {
-                    document.getElementById('percentVal').textContent = data.percent_covered.join(", ");
+                    document.getElementById('percentVal').textContent = data.percent_covered[data.distance.length - 1];
                 }
                 if (data.stop_count !== undefined) {
                     document.getElementById('stopCountVal').textContent = data.stop_count;
@@ -959,6 +978,74 @@
         ws.addEventListener("error", (err) => {
             console.error("WebSocket error:", err);
         });
+
+
+        // Map Js
+        const showBtn = document.getElementById('showMapBtn');
+        const hideBtn = document.getElementById('hideMapBtn');
+        const mapContainer = document.getElementById('mapContainer');
+
+        let map, marker,socket;
+        let mapLoaded = false;
+        const stopsMarkers = [];
+
+        if (!mapLoaded) {
+      mapContainer.style.display = 'block';
+
+      map = L.map('map').setView([20, 77], 5);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      socket = new WebSocket("ws://yourserver:8080");
+
+      if (data.type === "stops") {
+          data.stops.forEach(stop => {
+               const stopMarker = L.marker([stop.lat, stop.lng])
+                   .addTo(map)
+                   .bindPopup(stop.name);
+               stopsMarkers.push(stopMarker);
+          });
+          return;
+      }
+
+      socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        const lat = data.latitude;
+        const lng = data.longitude;
+        let speed = data.speed;
+        let SpeedStr = (typeof speed === 'number' && !isNaN(speed)) ? `${(speed * 3.6).toFixed(2)} km/h` : "not available";
+
+        if (marker) {
+          marker.setLatLng([lat, lng]);
+          marker.getPopup().setContent(`Remote device is here! Speed: ${SpeedStr}`);
+        } else {
+          marker = L.marker([lat, lng]).addTo(map).bindPopup(`Remote device is here! Speed: ${SpeedStr}`).openPopup();
+        }
+
+        socket.onerror = (err) => console.error("WebSocket error:", err);
+        socket.onclose = () => console.log("WebSocket closed");
+
+        mapLoaded = true;
+    } else {
+      mapContainer.style.display = 'block';
+    }
+    showBtn.style.display = 'none';
+    hideBtn.style.display = 'inline-block';
+  });
+
+    
+  hideBtn.addEventListener('click', () => {
+    if (socket) {
+      socket.close(); // Close WebSocket to stop receiving data
+      socket = null;
+    }
+    mapContainer.style.display = 'none';
+    showBtn.style.display = 'inline-block';
+    hideBtn.style.display = 'none';
+  });
+        
     </script>
 </body>
 </html>
