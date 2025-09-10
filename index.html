@@ -288,6 +288,7 @@
             from {
                 transform: translateY(0);
             }
+
             to {
                 transform: translateY(300px);
             }
@@ -634,7 +635,7 @@
             <span class="chip" id="liveBadge"><span class="spin" aria-hidden="true"></span> LIVE</span>
         </div>
     </header>
-    
+
     <main>
         <section class="panel" aria-labelledby="routeTitle">
             <h2 id="routeTitle">Route timeline</h2>
@@ -671,11 +672,18 @@
                     <div class="value" id="stopCountVal">--</div>
                 </div>
             </div>
+            <button id="showMapBtn">Show Live Map</button>
+            <button id="hideMapBtn" style="display:none; margin-left: 10px;">Hide Map</button>
+
+            <div id="mapContainer"
+                style="width: 700px; height: 450px; border: 2px solid #888; border-radius: 8px; box-shadow: 2px 2px 8px rgba(0,0,0,0.2); overflow: hidden; display: none;">
+                <div id="map" style="width: 100%; height: 100%;"></div>
+            </div>
             <p class="label" style="margin-top:10px" id="geoHint">Pick a bus, then choose Start and End stops; allow
                 location for live speed.</p>
         </aside>
     </main>
-    
+
     <button class="em-trigger" id="emBtn" aria-haspopup="true" aria-expanded="false">⚠ Emergency</button>
     <div class="em-menu" id="emMenu" role="menu" aria-label="Emergency contacts">
         <div class="em-item" role="menuitem">
@@ -689,13 +697,13 @@
                 id="busAct">Call</a>
         </div>
     </div>
-    
+
     <button class="fab" id="speedFab" aria-live="polite">
         <div><small id="speedSmall">Speed</small>
             <div class="big" id="speedFabVal">-- km/h</div>
         </div>
     </button>
-    
+
     <button class="chat-fab" id="chatToggle" aria-label="Open chatbot"><svg viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2">
             <path d="M21 15a4 4 0 0 1-4 4H9l-6 4 2-6a8 8 0 1 1 16-2Z" />
@@ -703,7 +711,7 @@
             <circle cx="13" cy="13" r="1" />
             <circle cx="17" cy="13" r="1" />
         </svg></button>
-        
+
     <section class="chat" id="chatBox" aria-label="Chatbot" aria-live="polite">
         <div class="chat-header">
             <div class="chat-title"><span class="chat-logo" aria-hidden="true"></span><span
@@ -717,7 +725,7 @@
         <form class="chat-input" id="chatForm"><input type="text" id="chatMsg" placeholder="Type message..."
                 autocomplete="off" /><button type="submit" id="sendBtn">Send</button></form>
     </section>
-    
+
     <script>
         const BUSES = [{ id: 'B1', name: 'Bus 1' }, { id: 'B2', name: 'Bus 2' }, { id: 'B3', name: 'Bus 3' }];
         const STOPS = {
@@ -729,14 +737,14 @@
         const busSel = $('busSel'), startSel = $('startSel'), endSel = $('endSel'), timeline = $('timeline');
         const speedVal = $('speedVal'), speedFabVal = $('speedFabVal'), etaVal = $('etaVal');
         const themeToggle = document.getElementById('themeToggle');
-        
+
         themeToggle.addEventListener('click', () => {
             const current = document.documentElement.getAttribute('data-theme') || 'dark';
             const next = current === 'light' ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', next);
             themeToggle.textContent = next === 'light' ? '☀️' : '🌙';
         });
-        
+
         const STR = {
             en: {
                 title: 'Bus Route Live', bus: 'Bus', start: 'Start', end: 'End', route: 'Route timeline', details: 'Details',
@@ -761,7 +769,7 @@
             }
         };
         let LANG = 'en';
-        
+
         function applyLang() {
             const T = STR[LANG];
             document.documentElement.lang = LANG;
@@ -791,17 +799,17 @@
             $('chatMsg').placeholder = T.chatPlaceholder;
             $('sendBtn').textContent = T.send;
         }
-        
+
         $('langSel').addEventListener('change', e => {
             LANG = e.target.value;
             applyLang();
         });
-        
+
         function initSelects() {
             busSel.innerHTML = BUSES.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
             loadStops(busSel.value);
         }
-        
+
         function loadStops(busId) {
             const stops = STOPS[busId] || [];
             const opts = stops.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -815,13 +823,13 @@
             updateRangeHighlight();
             updateETA();
         }
-        
+
         busSel.addEventListener('change', e => loadStops(e.target.value));
         [startSel, endSel].forEach(sel => sel.addEventListener('change', () => {
             updateRangeHighlight();
             updateETA();
         }));
-        
+
         let currentStops = [];
         function renderStops(stops) {
             currentStops = stops;
@@ -844,7 +852,7 @@
                 axis.style.height = (axisBottom - axisTop) + "px";
             }
         }
-        
+
         function updateRangeHighlight() {
             const startId = startSel.value, endId = endSel.value;
             const ids = currentStops.map(s => s.id);
@@ -852,7 +860,7 @@
             const [a, b] = i0 <= i1 ? [i0, i1] : [i1, i0];
             timeline.querySelectorAll('.stop').forEach((el, idx) => el.classList.toggle('in-range', idx >= a && idx <= b));
         }
-        
+
         const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
         function calcDistanceKm(aId, bId) {
             const idx = currentStops.findIndex(s => s.id === aId);
@@ -862,7 +870,7 @@
             const kmA = currentStops[a].km, kmB = currentStops[b].km;
             return Math.max(0, kmB - kmA);
         }
-        
+
         function updateETA() {
             const startId = startSel.value, endId = endSel.value;
             const dist = calcDistanceKm(startId, endId);
@@ -872,7 +880,7 @@
             const endLabel = document.getElementById(`eta-${endId}`);
             if (endLabel) endLabel.textContent = `ETA ${minutes} min`;
         }
-        
+
         const kmh = mps => (mps * 3.6).toFixed(0);
         let prev = null;
         function toRad(x) { return x * Math.PI / 180; }
@@ -882,27 +890,27 @@
             const h = Math.sin(dLat / 2) ** 2 + Math.cos(A) * Math.cos(B) * Math.sin(dLon / 2) ** 2;
             return 2 * R * Math.asin(Math.sqrt(h));
         }
-        
-       
-        
-        
-        
-        
-        function startDemoIfIdle() { 
-            setTimeout(() => { 
-                if (String(speedVal.textContent).trim() !== '--') return; 
-                let t = 0, lat = 23.025, lon = 72.571; 
-                setInterval(() => { 
-                    t += 1.5; 
-                    lat += 0.0008; 
-                    lon += 0.0005 * Math.sin(t / 5); 
-                     
-                    speedVal.textContent = '40'; 
-                    speedFabVal.textContent = '40 km/h'; 
-                }, 1500); 
-            }, 3000); 
+
+
+
+
+
+
+        function startDemoIfIdle() {
+            setTimeout(() => {
+                if (String(speedVal.textContent).trim() !== '--') return;
+                let t = 0, lat = 23.025, lon = 72.571;
+                setInterval(() => {
+                    t += 1.5;
+                    lat += 0.0008;
+                    lon += 0.0005 * Math.sin(t / 5);
+
+                    speedVal.textContent = '40';
+                    speedFabVal.textContent = '40 km/h';
+                }, 1500);
+            }, 3000);
         }
-        
+
         const chatToggle = $('chatToggle'), chatBox = $('chatBox'), chatClose = $('chatClose'), chatForm = $('chatForm'), chatBody = $('chatBody'), chatMsg = $('chatMsg');
         chatToggle.onclick = () => chatBox.classList.toggle('open');
         chatClose.onclick = () => chatBox.classList.remove('open');
@@ -917,28 +925,51 @@
                 chatBody.scrollTop = chatBody.scrollHeight;
             }, 600);
         });
-        
+
         const emBtn = $('emBtn'), emMenu = $('emMenu');
         function closeMenu() { emMenu.classList.remove('open'); emBtn.setAttribute('aria-expanded', 'false'); }
         function toggleMenu() { const open = !emMenu.classList.contains('open'); if (open) { emMenu.classList.add('open'); emBtn.setAttribute('aria-expanded', 'true'); } else { closeMenu(); } }
         emBtn.addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
         document.addEventListener('click', e => { if (!emMenu.contains(e.target) && e.target !== emBtn) closeMenu(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
-        
+
         applyLang();
         initSelects();
-        
+
         // Javascript releated to values being displayed 
+        // --- Single WebSocket Connection ---
         const ws = new WebSocket('wss://1dcf76d04ee1.ngrok-free.app/client');
 
         ws.addEventListener("open", () => {
             console.log("Connected to Python WebSocket server");
         });
 
+        ws.addEventListener("close", () => {
+            console.log("Disconnected from Python WebSocket server");
+            if (mapInitialized) { // Clean up map on disconnect
+                hideMap();
+            }
+        });
+
+        ws.addEventListener("error", (err) => {
+            console.error("WebSocket error:", err);
+        });
+
+        // --- Map Variables ---
+        const showBtn = document.getElementById('showMapBtn');
+        const hideBtn = document.getElementById('hideMapBtn');
+        const mapContainer = document.getElementById('mapContainer');
+        let map;
+        let busMarker;
+        const stopMarkers = [];
+        let mapInitialized = false;
+
+        // --- Unified WebSocket Message Handler ---
         ws.addEventListener("message", (event) => {
             try {
                 const data = JSON.parse(event.data);
 
+                // --- UI Panel Updates ---
                 if (data.speed !== undefined && data.speed !== null) {
                     const speed = Number(data.speed);
                     speedVal.textContent = isFinite(speed) ? speed.toFixed(0) : '--';
@@ -950,20 +981,32 @@
                 }
 
                 if (data.distance !== undefined && Array.isArray(data.distance)) {
-                    document.getElementById('distanceVal').textContent = data.distance[data.distance.length-1];
-                }
-                if (data.time !== undefined && Array.isArray(data.time)) {
-                    document.getElementById('timeVal').textContent = data.time[data.time.length - 1];
-                } else if (data.time !== undefined) {
-                    document.getElementById('timeVal').textContent = data.time;
+                    document.getElementById('distanceVal').textContent = data.distance[data.distance.length - 1];
                 }
 
+                if (data.time !== undefined) {
+                    document.getElementById('timeVal').textContent = Array.isArray(data.time) ? data.time[data.time.length - 1] : data.time;
                 }
+
                 if (data.percent_covered !== undefined && Array.isArray(data.percent_covered)) {
-                    document.getElementById('percentVal').textContent = data.percent_covered[data.distance.length - 1];
+                    document.getElementById('percentVal').textContent = data.percent_covered[data.percent_covered.length - 1];
                 }
+
                 if (data.stop_count !== undefined) {
                     document.getElementById('stopCountVal').textContent = data.stop_count;
+                }
+
+                // --- Map Data Handling ---
+                if (mapInitialized) {
+                    // Handle location updates for the bus
+                    if (data.type === 'location' && data.latitude && data.longitude) {
+                        updateMap(data);
+                    }
+
+                    // Handle stop data updates
+                    if (data.type === 'stops' && Array.isArray(data.stops)) {
+                        updateStopMarkers(data.stops);
+                    }
                 }
 
             } catch (err) {
@@ -971,81 +1014,82 @@
             }
         });
 
-        ws.addEventListener("close", () => {
-            console.log("Disconnected from Python WebSocket server");
-        });
+        // --- Map Control Functions ---
+        function initializeMap() {
+            if (mapInitialized) return;
 
-        ws.addEventListener("error", (err) => {
-            console.error("WebSocket error:", err);
-        });
+            mapContainer.style.display = 'block';
+            map = L.map('map').setView([20.5937, 78.9629], 5); // Default view centered on India
 
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
 
-        // Map Js
-        const showBtn = document.getElementById('showMapBtn');
-        const hideBtn = document.getElementById('hideMapBtn');
-        const mapContainer = document.getElementById('mapContainer');
+            mapInitialized = true;
+            showBtn.style.display = 'none';
+            hideBtn.style.display = 'inline-block';
 
-        let map, marker,socket;
-        let mapLoaded = false;
-        const stopsMarkers = [];
-
-        if (!mapLoaded) {
-      mapContainer.style.display = 'block';
-
-      map = L.map('map').setView([20, 77], 5);
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-
-      socket = new WebSocket("ws://yourserver:8080");
-
-      if (data.type === "stops") {
-          data.stops.forEach(stop => {
-               const stopMarker = L.marker([stop.lat, stop.lng])
-                   .addTo(map)
-                   .bindPopup(stop.name);
-               stopsMarkers.push(stopMarker);
-          });
-          return;
-      }
-
-      socket.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        const lat = data.latitude;
-        const lng = data.longitude;
-        let speed = data.speed;
-        let SpeedStr = (typeof speed === 'number' && !isNaN(speed)) ? `${(speed * 3.6).toFixed(2)} km/h` : "not available";
-
-        if (marker) {
-          marker.setLatLng([lat, lng]);
-          marker.getPopup().setContent(`Remote device is here! Speed: ${SpeedStr}`);
-        } else {
-          marker = L.marker([lat, lng]).addTo(map).bindPopup(`Remote device is here! Speed: ${SpeedStr}`).openPopup();
+            // Optionally, request initial stop data from server
+            // ws.send(JSON.stringify({ type: 'request_stops' }));
         }
 
-        socket.onerror = (err) => console.error("WebSocket error:", err);
-        socket.onclose = () => console.log("WebSocket closed");
+        function hideMap() {
+            if (!mapInitialized) return;
 
-        mapLoaded = true;
-    } else {
-      mapContainer.style.display = 'block';
-    }
-    showBtn.style.display = 'none';
-    hideBtn.style.display = 'inline-block';
-  });
+            mapContainer.style.display = 'none';
+            showBtn.style.display = 'inline-block';
+            hideBtn.style.display = 'none';
 
-    
-  hideBtn.addEventListener('click', () => {
-    if (socket) {
-      socket.close(); // Close WebSocket to stop receiving data
-      socket = null;
-    }
-    mapContainer.style.display = 'none';
-    showBtn.style.display = 'inline-block';
-    hideBtn.style.display = 'none';
-  });
-        
+            if (map) {
+                map.remove();
+                map = null;
+            }
+
+            busMarker = null;
+            stopMarkers.forEach(marker => marker.remove());
+            stopMarkers.length = 0;
+            mapInitialized = false;
+        }
+
+        function updateMap(data) {
+            const { latitude, longitude, speed } = data;
+            const newLatLng = [latitude, longitude];
+            const speedStr = (typeof speed === 'number' && !isNaN(speed)) ? `${(speed * 3.6).toFixed(2)} km/h` : "N/A";
+
+            if (busMarker) {
+                busMarker.setLatLng(newLatLng);
+                busMarker.setPopupContent(`<b>Bus Location</b><br>Speed: ${speedStr}`);
+            } else {
+                busMarker = L.marker(newLatLng).addTo(map)
+                    .bindPopup(`<b>Bus Location</b><br>Speed: ${speedStr}`)
+                    .openPopup();
+            }
+            map.panTo(newLatLng);
+        }
+
+        function updateStopMarkers(stops) {
+            // Clear existing stop markers
+            stopMarkers.forEach(marker => marker.remove());
+            stopMarkers.length = 0;
+
+            // Add new markers
+            stops.forEach(stop => {
+                if (stop.lat && stop.lng) {
+                    const stopMarker = L.marker([stop.lat, stop.lng])
+                        .addTo(map)
+                        .bindPopup(stop.name);
+                    stopMarkers.push(stopMarker);
+                }
+            });
+        }
+
+        showBtn.addEventListener('click', initializeMap);
+        hideBtn.addEventListener('click', hideMap);
+
+
+
     </script>
 </body>
+
 </html>
