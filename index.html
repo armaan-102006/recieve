@@ -978,16 +978,23 @@
 
                 if (data.time !== undefined) {
                     const rawSeconds = Array.isArray(data.time) ? data.time[data.time.length - 1] : data.time;
-                    const hours = Number(rawSeconds) / 3600;
-                    document.getElementById('timeVal').textContent = hours.toFixed(1) + ' hr';
+                    const hours = Number(rawSeconds) / 60;
+                    document.getElementById('timeVal').textContent = Math.round(minutes) + ' min';
                 }
 
-                if (data.percent_covered !== undefined && Array.isArray(data.percent_covered)) {
-                    document.getElementById('percentVal').textContent = data.percent_covered[data.percent_covered.length - 1];
+                if (data.percent_covered !== undefined && Array.isArray(data.percent_covered) && data.percent_covered.length > 0) {
+                    let latestPercent = data.percent_covered[data.percent_covered.length - 1];
+                    latestPercent = Number(latestPercent);
+                    if (isNaN(latestPercent)) {
+                    latestPercent = 0; 
+                }
+                    latestPercent = Math.max(0, Math.min(100, latestPercent));
+                    document.getElementById('percentVal').textContent = Math.round(latestPercent) + '%';
                 }
 
+                
                 if (data.stop_count !== undefined) {
-                    document.getElementById('stopCountVal').textContent = data.stop_count;
+                        document.getElementById('stopCountVal').textContent = data.stop_count;
                 }
 
                 // --- Map Data Handling ---
