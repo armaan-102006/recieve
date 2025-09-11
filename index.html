@@ -281,7 +281,7 @@
             border-radius: 50%;
             z-index: 10;
             box-shadow: 0 0 8px var(--accent);
-            animation: moveBus 40s linear infinite;
+            
         }
 
         @keyframes moveBus {
@@ -833,7 +833,7 @@
         let currentStops = [];
         function renderStops(stops) {
             currentStops = stops;
-            timeline.querySelectorAll('.stop').forEach(n => n.remove());
+            
             stops.forEach(s => {
                 const el = document.createElement('div');
                 el.className = 'stop';
@@ -842,15 +842,7 @@
                 el.innerHTML = `<span class="dot" aria-hidden="true"></span><div class="row"><div><div class="name">${s.name}</div><div class="meta">${s.km} km from start</div></div><div class="eta" id="eta-${s.id}">ETA --</div></div>`;
                 timeline.appendChild(el);
             });
-            const stopsEls = timeline.querySelectorAll('.stop');
-            const axis = timeline.querySelector('.axis');
-            if (stopsEls.length && axis) {
-                const first = stopsEls[0], last = stopsEls[stopsEls.length - 1];
-                const axisTop = first.offsetTop + first.offsetHeight / 2;
-                const axisBottom = last.offsetTop + last.offsetHeight / 2;
-                axis.style.top = axisTop + "px";
-                axis.style.height = (axisBottom - axisTop) + "px";
-            }
+            
         }
 
         function updateRangeHighlight() {
@@ -1086,6 +1078,47 @@
 
         showBtn.addEventListener('click', initializeMap);
         hideBtn.addEventListener('click', hideMap);
+
+        //Timeline1 
+        const timeline1 = document.getElementById('timeline');
+        const busIcon = document.getElementById('bus-icon');
+
+        const stopsEls = timeline.querySelectorAll('.stop');
+            const axis = timeline.querySelector('.axis');
+            if (stopsEls.length && axis) {
+                const first = stopsEls[0], last = stopsEls[stopsEls.length - 1];
+                const axisTop = first.offsetTop + first.offsetHeight / 2;
+                const axisBottom = last.offsetTop + last.offsetHeight / 2;
+                axis.style.top = axisTop + "px";
+                axis.style.height = (axisBottom - axisTop) + "px";
+            }
+
+            // Use the axis dimensions for calculating positions
+            const axisTop = axis.offsetTop;
+            const axisLen = axis.offsetHeight;
+
+        function placeStopsProportionally(percent_covered)
+         {
+        
+            if (!stopsEls.length || !axis || !percent_covered || percent_covered.length !== stopsEls.length) {
+                const first = stopsEls[0], last = stopsEls[stopsEls.length - 1];
+                const axisTop = first.offsetTop + first.offsetHeight / 2;
+                const axisBottom = last.offsetTop + last.offsetHeight / 2;
+                axis.style.top = axisTop + "px";
+                axis.style.height = (axisBottom - axisTop) + "px";
+
+                
+            }     
+            
+            // Place each stop at its proportional position
+            stopsEls.forEach((el, i) => {
+                const percent = percent_covered[i] / 100;
+                el.style.position = "absolute";
+                // Center the stop on the axis line
+                el.style.left = (axis.offsetLeft + axis.offsetWidth / 2 - el.offsetWidth / 2) + "px";
+                el.style.top = (axisTop + percent * axisLen - el.offsetHeight / 2) + "px";
+            });
+        }
 
 
 
