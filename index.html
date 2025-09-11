@@ -977,7 +977,9 @@
                 }
 
                 if (data.time !== undefined) {
-                    document.getElementById('timeVal').textContent = Array.isArray(data.time) ? data.time[data.time.length - 1] : data.time;
+                    const rawSeconds = Array.isArray(data.time) ? data.time[data.time.length - 1] : data.time;
+                    const hours = Number(rawSeconds) / 3600;
+                    document.getElementById('timeVal').textContent = hours.toFixed(1) + ' hr';
                 }
 
                 if (data.percent_covered !== undefined && Array.isArray(data.percent_covered)) {
