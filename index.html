@@ -602,12 +602,11 @@
             font-weight: 600;
         }
 
-        /*Map releated*/
         #map {
             height: 400px;
             width: 100%;
         }
-    </style> <!--Map releated-->
+    </style>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -633,6 +632,7 @@
                     class="spin" aria-hidden="true"></span> LIVE</span>
         </div>
     </header>
+
     <main>
         <section class="panel" aria-labelledby="routeTitle">
             <h2 id="routeTitle">Route timeline</h2>
@@ -664,8 +664,9 @@
                     <div class="label" id="stopsLabel">Stops</div>
                     <div class="value" id="stopCountVal">--</div>
                 </div>
-            </div> <button id="showMapBtn">Show Live Map</button> <button id="hideMapBtn"
-                style="display:none; margin-left: 10px;">Hide Map</button>
+            </div>
+            <button id="showMapBtn">Show Live Map</button>
+            <button id="hideMapBtn" style="display:none; margin-left: 10px;">Hide Map</button>
             <div id="mapContainer"
                 style="width: 700px; height: 450px; border: 2px solid #888; border-radius: 8px; box-shadow: 2px 2px 8px rgba(0,0,0,0.2); overflow: hidden; display: none;">
                 <div id="map" style="width: 100%; height: 100%;"></div>
@@ -673,7 +674,9 @@
             <p class="label" style="margin-top:10px" id="geoHint">Pick a bus, then choose Start and End stops; allow
                 location for live speed.</p>
         </aside>
-    </main> <button class="em-trigger" id="emBtn" aria-haspopup="true" aria-expanded="false">⚠ Emergency</button>
+    </main>
+
+    <button class="em-trigger" id="emBtn" aria-haspopup="true" aria-expanded="false">⚠ Emergency</button>
     <div class="em-menu" id="emMenu" role="menu" aria-label="Emergency contacts">
         <div class="em-item" role="menuitem">
             <div><strong id="polLbl">Police</strong> <small>100</small></div><a href="tel:100" id="polAct">Call</a>
@@ -685,36 +688,42 @@
             <div><strong id="busLbl">Bus Service</strong> <small>1800-000-111</small></div><a href="tel:1800000111"
                 id="busAct">Call</a>
         </div>
-    </div> <button class="fab" id="speedFab" aria-live="polite">
+    </div>
+
+    <button class="fab" id="speedFab" aria-live="polite">
         <div><small id="speedSmall">Speed</small>
             <div class="big" id="speedFabVal">-- km/h</div>
         </div>
-    </button> <button class="chat-fab" id="chatToggle" aria-label="Open chatbot"><svg viewBox="0 0 24 24" fill="none"
+    </button>
+
+    <button class="chat-fab" id="chatToggle" aria-label="Open chatbot"><svg viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2">
             <path d="M21 15a4 4 0 0 1-4 4H9l-6 4 2-6a8 8 0 1 1 16-2Z" />
             <circle cx="9" cy="13" r="1" />
             <circle cx="13" cy="13" r="1" />
             <circle cx="17" cy="13" r="1" />
         </svg></button>
+
     <section class="chat" id="chatBox" aria-label="Chatbot" aria-live="polite">
         <div class="chat-header">
             <div class="chat-title"><span class="chat-logo" aria-hidden="true"></span><span
-                    id="chatTitle">Chatbot</span></div><button
-                style="background:#1b263b;border:none;color:#dbe7ff;border-radius:8px;padding:4px 8px"
+                    id="chatTitle">Chatbot</span></div>
+            <button style="background:#1b263b;border:none;color:#dbe7ff;border-radius:8px;padding:4px 8px"
                 id="chatClose">×</button>
         </div>
         <div class="chat-body" id="chatBody">
             <div class="bubble bot" id="chatWelcome">Hi! Ask about routes, stops, or ETAs.</div>
         </div>
-        <form class="chat-input" id="chatForm"><input type="text" id="chatMsg" placeholder="Type message..."
-                autocomplete="off" /><button type="submit" id="sendBtn">Send</button></form>
+        <form class="chat-input" id="chatForm">
+            <input type="text" id="chatMsg" placeholder="Type message..." autocomplete="off" />
+            <button type="submit" id="sendBtn">Send</button>
+        </form>
     </section>
-    
+
     <script>
         // --- UTILITY AND CONSTANTS ---
         const id = (id) => document.getElementById(id);
 
-        // Correctly defined constants
         const busSel = id('busSel'),
             startSel = id('startSel'),
             endSel = id('endSel'),
@@ -723,9 +732,7 @@
             etaVal = id('etaVal'),
             themeToggle = id('themeToggle');
 
-        // Hidden holders for per-station ETA values (required by instructions). We create them if not present.
-        // timeVal = station1, timeVal1 = station2, timeVal2 = station3, timeVal3 = station4
-        // distanceVal1..3 are optional extras paired with time indices.
+        // Ensure hidden holders exist for time and distance slots
         function ensureHiddenHolders() {
             const ensure = (elemId) => {
                 if (!document.getElementById(elemId)) {
@@ -739,14 +746,13 @@
             ensure('timeVal1');
             ensure('timeVal2');
             ensure('timeVal3');
-
             ensure('distanceVal1');
             ensure('distanceVal2');
             ensure('distanceVal3');
         }
         ensureHiddenHolders();
 
-        // Data for buses and stops
+        // Data
         const BUSES = [
             { id: 'B1', name: 'Bus 1' },
             { id: 'B2', name: 'Bus 2' },
@@ -775,20 +781,12 @@
         // --- TIMELINE RENDERING ---
         function renderStops(stops) {
             const timeline = id('timeline');
-            if (!timeline) {
-                console.error("Timeline element not found!");
-                return;
-            }
-            // Clear previous stops before rendering new ones
+            if (!timeline) { console.error("Timeline element not found!"); return; }
             timeline.innerHTML = '<div class="axis" aria-hidden="true"></div><div id="bus-icon" class="bus-icon"></div>';
             currentStops = stops;
 
-            // Adjust axis full height
             const axis = timeline.querySelector('.axis');
-            if (axis) {
-                axis.style.top = '0px';
-                axis.style.bottom = '0px';
-            }
+            if (axis) { axis.style.top = '0px'; axis.style.bottom = '0px'; }
 
             stops.forEach(s => {
                 const el = document.createElement('div');
@@ -807,11 +805,9 @@
                 timeline.appendChild(el);
             });
 
-            // Update stop count display
             const stopCountVal = id('stopCountVal');
             if (stopCountVal) stopCountVal.textContent = String(stops.length);
 
-            // After render, reposition bus icon to top by default
             positionBusIconByProgress(0);
         }
 
@@ -821,17 +817,16 @@
             startSel.innerHTML = opts;
             endSel.innerHTML = opts;
             if (stops.length > 0) {
-                startSel.value = stops.id;
+                startSel.value = stops?.id || '';
                 endSel.value = stops[stops.length - 1].id;
             }
             renderStops(stops);
-            updateDistanceAndPercent(); // recompute distance and coverage for display
+            updateDistanceAndPercent();
         }
 
         function initSelects() {
             busSel.innerHTML = BUSES.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-            // Default select first
-            busSel.value = BUSES.id;
+            busSel.value = BUSES?.id || '';
             loadStops(busSel.value);
             busSel.addEventListener('change', e => loadStops(e.target.value));
             startSel.addEventListener('change', () => updateDistanceAndPercent());
@@ -840,12 +835,10 @@
 
         // --- BUS ICON POSITIONING ---
         function positionBusIconByProgress(progress01) {
-            // progress01 in[7]
             const timeline = id('timeline');
             const busIcon = id('bus-icon');
             if (!timeline || !busIcon) return;
 
-            // Compute total height spanned by stops
             const stopEls = Array.from(timeline.querySelectorAll('.stop'));
             if (stopEls.length === 0) {
                 busIcon.style.transform = 'translateY(0px)';
@@ -854,7 +847,6 @@
             const firstRect = stopEls.getBoundingClientRect();
             const lastRect = stopEls[stopEls.length - 1].getBoundingClientRect();
             const containerRect = timeline.getBoundingClientRect();
-
             const topY = firstRect.top - containerRect.top;
             const bottomY = lastRect.top - containerRect.top;
             const span = Math.max(0, bottomY - topY);
@@ -864,7 +856,6 @@
 
         // --- DETAILS AGGREGATIONS ---
         function updateDistanceAndPercent() {
-            // Distance shown in distanceVal is overall end-start km difference
             const busId = busSel.value;
             const stops = STOPS[busId] || [];
             const startIdx = stops.findIndex(s => s.id === startSel.value);
@@ -878,7 +869,6 @@
             const distanceValEl = id('distanceVal');
             if (distanceValEl) distanceValEl.textContent = totalKm === '--' ? '--' : String(totalKm);
 
-            // Simple percent covered example: if backend provides better info, we overwrite it on message
             const percentVal = id('percentVal');
             if (percentVal) percentVal.textContent = totalKm === '--' ? '--' : '0%';
         }
@@ -924,7 +914,6 @@
             chatBody.appendChild(b);
             input.value = '';
             chatBody.scrollTop = chatBody.scrollHeight;
-            // Echo bot
             const bot = document.createElement('div');
             bot.className = 'bubble bot';
             bot.textContent = 'Got it. Tracking...';
@@ -941,7 +930,7 @@
 
         function initMapIfNeeded() {
             if (mapInited) return;
-            map = L.map('map').setView([28.6139, 77.2090], 12); // default view Delhi
+            map = L.map('map').setView([28.6139, 77.2090], 12);
             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap'
@@ -953,11 +942,12 @@
             mapContainer.style.display = 'block';
             initMapIfNeeded();
             setTimeout(() => { map.invalidateSize(); }, 50);
+            toggleMapButtons();
         });
         hideMapBtn?.addEventListener('click', () => {
             mapContainer.style.display = 'none';
+            toggleMapButtons();
         });
-        // Toggle hide/show buttons visibility
         const toggleMapButtons = () => {
             if (mapContainer.style.display === 'none' || mapContainer.style.display === '') {
                 hideMapBtn.style.display = 'none';
@@ -967,39 +957,22 @@
                 showMapBtn.style.display = 'none';
             }
         };
-        showMapBtn?.addEventListener('click', toggleMapButtons);
-        hideMapBtn?.addEventListener('click', toggleMapButtons);
 
-        // --- GEO SPEED (optional, tied to speed display) ---
-        if (navigator.geolocation) {
-            navigator.geolocation.watchPosition((pos) => {
-                if (pos.coords && typeof pos.coords.speed === 'number' && !isNaN(pos.coords.speed)) {
-                    const kmh = Math.max(0, pos.coords.speed * 3.6);
-                    speedVal.textContent = kmh.toFixed(0);
-                    speedFabVal.textContent = `${kmh.toFixed(0)} km/h`;
-                }
-            }, () => { }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
-        }
+    
 
         // --- BACKEND DATA WIRING ---
-        // Helper: map time[] entries to timeline and to timeVal..timeVal3
         function applyTimeArrayToETAs(timeArray) {
-            // timeVal = Station 1, timeVal1 = Station 2, timeVal2 = Station 3, timeVal3 = Station 4
             const toMinStr = (v) => {
                 const n = Math.round(Number(v));
                 if (!isFinite(n)) return '--';
                 return n + ' min';
             };
-
-            // Set hidden holders first
             if (Array.isArray(timeArray)) {
                 if (timeArray.length > 0) id('timeVal').textContent = toMinStr(timeArray);
-                if (timeArray.length > 1) id('timeVal1').textContent = toMinStr(timeArray);[7]
-                if (timeArray.length > 2) id('timeVal2').textContent = toMinStr(timeArray);[8]
-                if (timeArray.length > 3) id('timeVal3').textContent = toMinStr(timeArray);[1]
+                if (timeArray.length > 1) id('timeVal1').textContent = toMinStr(timeArray);[4]
+                if (timeArray.length > 2) id('timeVal2').textContent = toMinStr(timeArray);[5]
+                if (timeArray.length > 3) id('timeVal3').textContent = toMinStr(timeArray);[6]
             }
-
-            // Mirror to timeline stop labels by order
             const stops = currentStops || [];
             stops.forEach((s, idx) => {
                 const el = id(`eta-${s.id}`);
@@ -1007,40 +980,32 @@
                 const v = (Array.isArray(timeArray) && timeArray.length > idx) ? toMinStr(timeArray[idx]) : '--';
                 el.textContent = `ETA ${v}`;
             });
-
-            // Also set the overall ETA to end (etaVal) to last provided time
             if (Array.isArray(timeArray) && timeArray.length) {
                 const last = toMinStr(timeArray[timeArray.length - 1]);
                 etaVal.textContent = last;
             }
         }
 
-        // Helper: map distance[] to distanceVal and distanceVal1..3
         function applyDistanceArray(distanceArray) {
             if (!Array.isArray(distanceArray)) return;
             const safeNum = (v) => {
                 const n = Number(v);
                 return isFinite(n) ? n : '--';
             };
-            // Show first in main "Distance (km)"
             if (distanceArray.length > 0) id('distanceVal').textContent = String(safeNum(distanceArray));
-            if (distanceArray.length > 1) id('distanceVal1').textContent = String(safeNum(distanceArray));[7]
-            if (distanceArray.length > 2) id('distanceVal2').textContent = String(safeNum(distanceArray));[8]
-            if (distanceArray.length > 3) id('distanceVal3').textContent = String(safeNum(distanceArray));[1]
+            if (distanceArray.length > 1) id('distanceVal1').textContent = String(safeNum(distanceArray));[4]
+            if (distanceArray.length > 2) id('distanceVal2').textContent = String(safeNum(distanceArray));[5]
+            if (distanceArray.length > 3) id('distanceVal3').textContent = String(safeNum(distanceArray));[6]
         }
 
-        // Helper: move bus icon based on either percent or index
         function updateBusIconFromBackend(data) {
-            // Prefer percentage (0..100) if provided, else infer from time progress
             if (typeof data.percent === 'number' && isFinite(data.percent)) {
                 positionBusIconByProgress(Math.min(1, Math.max(0, data.percent / 100)));
                 const percentVal = id('percentVal');
                 if (percentVal) percentVal.textContent = `${Math.round(data.percent)}%`;
                 return;
             }
-            // Fallback: compute simple progress based on which ETA is shortest
             if (Array.isArray(data.time) && data.time.length && currentStops.length) {
-                // Estimate progress as completed stops/total
                 let nextIdx = data.time.findIndex(t => Number(t) > 0);
                 if (nextIdx === -1) nextIdx = 0;
                 const prog = Math.min(1, nextIdx / Math.max(1, currentStops.length - 1));
@@ -1049,25 +1014,32 @@
         }
 
         // --- WEBSOCKET AND OTHER LOGIC ---
-        const ws = new WebSocket('wss://a087717a5db2.ngrok-free.app/client');
+        const ws = new WebSocket('wss://7f1478a3568e.ngrok-free.app/client');
         ws.addEventListener('open', () => console.log('Connected to Python WebSocket server'));
-        ws.addEventListener('message', (event) => {
+        ws.addEventListener('error', (e) => console.error('WebSocket error', e));
+        ws.addEventListener('close', (e) => console.warn('WebSocket closed', e.code, e.reason));
+
+        ws.addEventListener('message', async (event) => {
+            console.debug('WS message raw:', event.data);
             let data;
             try {
-                data = JSON.parse(event.data);
-            } catch {
-                console.warn('Non-JSON message', event.data);
+                if (event.data instanceof Blob) {
+                    const text = await event.data.text();
+                    data = JSON.parse(text);
+                } else {
+                    data = JSON.parse(event.data);
+                }
+            } catch (err) {
+                console.error('JSON parse failed', err, event.data);
                 return;
             }
 
-            // Speed
             if (typeof data.speed === 'number' && isFinite(data.speed)) {
                 const s = Math.max(0, data.speed);
                 speedVal.textContent = String(s);
                 speedFabVal.textContent = `${s} km/h`;
             }
 
-            // Percent (also updates bus icon)
             if (typeof data.percent === 'number' && isFinite(data.percent)) {
                 const pv = id('percentVal');
                 if (pv) pv.textContent = `${Math.round(data.percent)}%`;
@@ -1077,13 +1049,13 @@
             if (data.distance !== undefined && Array.isArray(data.distance)) {
                 document.getElementById('distanceVal').textContent = data.distance;
                 if (data.distance.length > 1) {
-                    document.getElementById('distanceVal1').textContent = data.distance;[7]
+                    document.getElementById('distanceVal1').textContent = data.distance;[4]
                 }
                 if (data.distance.length > 2) {
-                    document.getElementById('distanceVal2').textContent = data.distance;[8]
+                    document.getElementById('distanceVal2').textContent = data.distance;[5]
                 }
                 if (data.distance.length > 3) {
-                    document.getElementById('distanceVal3').textContent = data.distance;[1]
+                    document.getElementById('distanceVal3').textContent = data.distance;[6]
                 }
             }
 
@@ -1092,20 +1064,19 @@
                 const val0 = Math.round(Number(data.time)) + ' min';
                 document.getElementById('timeVal').textContent = val0;
                 if (data.time.length > 1) {
-                    const val1 = Math.round(Number(data.time)) + ' min';[7]
+                    const val1 = Math.round(Number(data.time)) + ' min';[4]
                     document.getElementById('timeVal1').textContent = val1;
                 }
                 if (data.time.length > 2) {
-                    const val2 = Math.round(Number(data.time)) + ' min';[8]
+                    const val2 = Math.round(Number(data.time)) + ' min';[5]
                     document.getElementById('timeVal2').textContent = val2;
                 }
                 if (data.time.length > 3) {
-                    const val3 = Math.round(Number(data.time)) + ' min';[1]
+                    const val3 = Math.round(Number(data.time)) + ' min';[6]
                     document.getElementById('timeVal3').textContent = val3;
                 }
             }
 
-            // Mirror the arrays into UI (timeline ETA/overall distance)
             if (Array.isArray(data.distance)) {
                 applyDistanceArray(data.distance);
             }
@@ -1113,7 +1084,6 @@
                 applyTimeArrayToETAs(data.time);
             }
 
-            // Optional: update map with marker if backend sends lat/lng
             if (typeof data.lat === 'number' && typeof data.lng === 'number') {
                 initMapIfNeeded();
                 map.setView([data.lat, data.lng], map.getZoom() || 13);
@@ -1125,7 +1095,6 @@
                 }
             }
 
-            // Update bus icon last to reflect percent/time
             updateBusIconFromBackend(data);
         });
 
