@@ -281,7 +281,7 @@
             border-radius: 50%;
             z-index: 10;
             box-shadow: 0 0 8px var(--accent);
-            
+
         }
 
         @keyframes moveBus {
@@ -727,9 +727,10 @@
     </section>
 
     <script>
+        //where tf do i put my values gng
         const BUSES = [{ id: 'B1', name: 'Bus 1' }, { id: 'B2', name: 'Bus 2' }, { id: 'B3', name: 'Bus 3' }];
         const STOPS = {
-            B1: [{ id: 'S1', name: 'Station 1', km: 0 }, { id: 'S2', name: 'Station 2', km: 4 }, { id: 'S3', name: 'Station 3', km: 8 }, { id: 'S4', name: 'Station 4', km: 12 }],
+            B1: [{ id: 'S1', name: 'Station 1', }, { id: 'S2', name: 'Station 2', km: 4 }, { id: 'S3', name: 'Station 3', km: 8 }, { id: 'S4', name: 'Station 4', km: 12 }],
             B2: [{ id: 'S5', name: 'Station 5', km: 0 }, { id: 'S6', name: 'Station 6', km: 7 }, { id: 'S7', name: 'Station 7', km: 22 }],
             B3: [{ id: 'S8', name: 'Station 8', km: 0 }, { id: 'S9', name: 'Station 9', km: 3 }, { id: 'S10', name: 'Station 10', km: 5 }]
         };
@@ -833,7 +834,7 @@
         let currentStops = [];
         function renderStops(stops) {
             currentStops = stops;
-            
+
             stops.forEach(s => {
                 const el = document.createElement('div');
                 el.className = 'stop';
@@ -842,7 +843,7 @@
                 el.innerHTML = `<span class="dot" aria-hidden="true"></span><div class="row"><div><div class="name">${s.name}</div><div class="meta">${s.km} km from start</div></div><div class="eta" id="eta-${s.id}">ETA --</div></div>`;
                 timeline.appendChild(el);
             });
-            
+
         }
 
         function updateRangeHighlight() {
@@ -862,7 +863,8 @@
             const kmA = currentStops[a].km, kmB = currentStops[b].km;
             return Math.max(0, kmB - kmA);
         }
-
+        
+        //Here i want it to take timeVal value
         function updateETA() {
             const startId = startSel.value, endId = endSel.value;
             const dist = calcDistanceKm(startId, endId);
@@ -873,6 +875,7 @@
             if (endLabel) endLabel.textContent = `ETA ${minutes} min`;
         }
 
+        //isnt data comming already in km/h and also its not take our data?
         const kmh = mps => (mps * 3.6).toFixed(0);
         let prev = null;
         function toRad(x) { return x * Math.PI / 180; }
@@ -883,11 +886,8 @@
             return 2 * R * Math.asin(Math.sqrt(h));
         }
 
-
-
-
-
-
+        
+        //What is this doing???
         function startDemoIfIdle() {
             setTimeout(() => {
                 if (String(speedVal.textContent).trim() !== '--') return;
@@ -968,33 +968,52 @@
                     speedFabVal.textContent = isFinite(speed) ? `${speed.toFixed(0)} km/h` : '-- km/h';
                 }
 
-                if (data.eta !== undefined && data.eta !== null) {
-                    etaVal.textContent = `${data.eta} min`;
-                }
-
                 if (data.distance !== undefined && Array.isArray(data.distance)) {
-                    document.getElementById('distanceVal').textContent = data.distance[data.distance.length - 1];
+                   
+                    document.getElementById('distanceVal').textContent = data.distance[0];
+
+                    if (data.distance.length > 1) {
+                        document.getElementById('distanceVal1').textContent = data.distance[1];
+                    }
+
+                    if (data.distance.length > 2) {
+                        document.getElementById('distanceVal2').textContent = data.distance[2];
+                    }
                 }
 
-                if (data.time !== undefined) {
-                    const rawSeconds = Array.isArray(data.time) ? data.time[data.time.length - 1] : data.time;
-                    const hours = Number(rawSeconds) / 60;
-                    document.getElementById('timeVal').textContent = Math.round(minutes) + ' min';
+
+                if (data.time !== undefined && Array.isArray(data.time)) {
+
+                    const val0 = Math.round(Number(data.time[0])) + ' min';
+                    document.getElementById('timeVal').textContent = val0;
+
+
+                    if (data.time.length > 1) {
+                        const val1 = Math.round(Number(data.time[1])) + ' min';
+                        document.getElementById('timeVal1').textContent = val1;
+                    }
+
+
+                    if (data.time.length > 2) {
+                        const val2 = Math.round(Number(data.time[2])) + ' min';
+                        document.getElementById('timeVal2').textContent = val2;
+                    }
                 }
+
 
                 if (data.percent_covered !== undefined && Array.isArray(data.percent_covered) && data.percent_covered.length > 0) {
                     let latestPercent = data.percent_covered[data.percent_covered.length - 1];
                     latestPercent = Number(latestPercent);
                     if (isNaN(latestPercent)) {
-                    latestPercent = 0; 
-                }
+                        latestPercent = 0;
+                    }
                     latestPercent = Math.max(0, Math.min(100, latestPercent));
                     document.getElementById('percentVal').textContent = Math.round(latestPercent) + '%';
                 }
 
-                
+
                 if (data.stop_count !== undefined) {
-                        document.getElementById('stopCountVal').textContent = data.stop_count;
+                    document.getElementById('stopCountVal').textContent = data.stop_count;
                 }
 
                 // --- Map Data Handling ---
@@ -1093,22 +1112,21 @@
         const busIcon = document.getElementById('bus-icon');
 
         const stopsEls = timeline.querySelectorAll('.stop');
-            const axis = timeline.querySelector('.axis');
-            if (stopsEls.length && axis) {
-                const first = stopsEls[0], last = stopsEls[stopsEls.length - 1];
-                const axisTop = first.offsetTop + first.offsetHeight / 2;
-                const axisBottom = last.offsetTop + last.offsetHeight / 2;
-                axis.style.top = axisTop + "px";
-                axis.style.height = (axisBottom - axisTop) + "px";
-            }
+        const axis = timeline.querySelector('.axis');
+        if (stopsEls.length && axis) {
+            const first = stopsEls[0], last = stopsEls[stopsEls.length - 1];
+            const axisTop = first.offsetTop + first.offsetHeight / 2;
+            const axisBottom = last.offsetTop + last.offsetHeight / 2;
+            axis.style.top = axisTop + "px";
+            axis.style.height = (axisBottom - axisTop) + "px";
+        }
 
-            // Use the axis dimensions for calculating positions
-            const axisTop = axis.offsetTop;
-            const axisLen = axis.offsetHeight;
+        // Use the axis dimensions for calculating positions
+        const axisTop = axis.offsetTop;
+        const axisLen = axis.offsetHeight;
 
-        function placeStopsProportionally(percent_covered)
-         {
-        
+        function placeStopsProportionally(percent_covered) {
+
             if (!stopsEls.length || !axis || !percent_covered || percent_covered.length !== stopsEls.length) {
                 const first = stopsEls[0], last = stopsEls[stopsEls.length - 1];
                 const axisTop = first.offsetTop + first.offsetHeight / 2;
@@ -1116,9 +1134,9 @@
                 axis.style.top = axisTop + "px";
                 axis.style.height = (axisBottom - axisTop) + "px";
 
-                
-            }     
-            
+
+            }
+
             // Place each stop at its proportional position
             stopsEls.forEach((el, i) => {
                 const percent = percent_covered[i] / 100;
