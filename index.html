@@ -922,21 +922,79 @@
         });
 
         // --- MAP (Leaflet) ---
-        let map = null;
-        let mapInited = false;
+        let map;
+        let busMarker;
+        let mapInitialized = false;
+        const stopMarker = [];
         const showMapBtn = id('showMapBtn');
         const hideMapBtn = id('hideMapBtn');
         const mapContainer = id('mapContainer');
 
-        function initMapIfNeeded() {
-            if (mapInited) return;
-            map = L.map('map').setView([28.6139, 77.2090], 12);
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+       function initializeMap() {
+           if (mapInitialized) return;
+           
+           mapContainer.style.display = 'block';
+           map = L.map('map').setView([20.5937, 78.9629], 5); // Default India center
+
+           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
-            mapInited = true;
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+           }).addTo(map);
+
+           mapInitialized = true;
+           showBtn.style.display = 'none';
+           hideBtn.style.display = 'inline-block';
         }
+
+        function hideMap() {
+            if (!mapInitialized) return;
+
+            mapContainer.style.display = 'none';
+            showBtn.style.display = 'inline-block';
+            hideBtn.style.display = 'none';
+
+            if (map) {
+                map.remove();
+                 map = null;
+            }
+
+            busMarker = null;
+            stopMarkers.forEach(marker => marker.remove());
+            stopMarkers.length = 0;
+            mapInitialized = false;
+        }
+
+        function updateMap(data) {
+            const { latitude, longitude, speed } = data;
+            const newLatLng = [latitude, longitude];
+            const speedStr = (typeof speed === 'number' && !isNaN(speed)) ? `${(speed * 3.6).toFixed(2)} km/h` : "N/A";
+
+            if (busMarker) {
+                busMarker.setLatLng(newLatLng);
+                busMarker.setPopupContent(`<b>Bus Location</b><br>Speed: ${speedStr}`);
+            } else {
+               busMarker = L.marker(newLatLng).addTo(map)
+                   .bindPopup(`<b>Bus Location</b><br>Speed: ${speedStr}`)
+                   .openPopup();
+            }
+            map.panTo(newLatLng);
+        }
+
+        function updateStopMarkers(stops) {
+                   
+             stopMarkers.forEach(marker => marker.remove());
+             stopMarkers.length = 0;
+
+             stops.forEach(stop => {
+                if (Array.isArray(stop) && stop.length === 2) {
+                    const stopMarker = L.marker([stop[0], stop[1]])
+                        .addTo(map)
+                        .bindPopup('Stop');
+                    stopMarkers.push(stopMarker);
+                }
+              });
+        }
+
 
         showMapBtn?.addEventListener('click', () => {
             mapContainer.style.display = 'block';
@@ -1083,16 +1141,19 @@
             if (Array.isArray(data.time)) {
                 applyTimeArrayToETAs(data.time);
             }
+            if (mapInitialized) {
+                try {
 
-            if (typeof data.lat === 'number' && typeof data.lng === 'number') {
-                initMapIfNeeded();
-                map.setView([data.lat, data.lng], map.getZoom() || 13);
-                if (!window._busMarker) {
-                    window._busMarker = L.marker([data.lat, data.lng]).addTo(map);
-                    window._busMarker.bindPopup('Live Bus');
-                } else {
-                    window._busMarker.setLatLng([data.lat, data.lng]);
-                }
+                    if (Array.isArray(data) && Array.isArray(data[0]) && data[0].length === 2) {
+
+                        const latitude = data[0][0];
+                        const longitude = data[0][1];
+                        const stops = data.slice(1);
+
+                        updateMap({ latitude, longitude, speed: null }); // speed unknown here
+
+                        updateStopMarkers(stops);
+                    }
             }
 
             updateBusIconFromBackend(data);
