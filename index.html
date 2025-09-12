@@ -979,6 +979,10 @@
                     if (data.distance.length > 2) {
                         document.getElementById('distanceVal2').textContent = data.distance[2];
                     }
+
+                    if (data.distance.length > 3) {
+                        document.getElementById('distanceVal3').textContent = data.distance[3];
+                    }
                 }
 
 
@@ -997,6 +1001,11 @@
                     if (data.time.length > 2) {
                         const val2 = Math.round(Number(data.time[2])) + ' min';
                         document.getElementById('timeVal2').textContent = val2;
+                    }
+
+                    if (data.time.length > 3) {
+                        const val3 = Math.round(Number(data.time[3])) + ' min';
+                        document.getElementById('timeVal3').textContent = val3;
                     }
                 }
 
