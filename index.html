@@ -1072,7 +1072,7 @@
         }
 
         // --- WEBSOCKET AND OTHER LOGIC ---
-        const ws = new WebSocket('wss://0cf7055fea63.ngrok-free.app/client');
+        const ws = new WebSocket('wss://13caa6659042.ngrok-free.app/client');
         ws.addEventListener('open', () => console.log('Connected to Python WebSocket server'));
         ws.addEventListener('error', (e) => console.error('WebSocket error', e));
         ws.addEventListener('close', (e) => console.warn('WebSocket closed', e.code, e.reason));
